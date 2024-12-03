@@ -1,23 +1,57 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
-import QRCode from "react-native-qrcode-svg";
+import QRCode from "expo-barcode-generator"; // Librería para generar el QR
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from "axios";
 
-const QRScreen = () => {
-  const [userData, setUserData] = useState({ username: null, email: null, name: null });
+// Funciones para manejar el token
+const storeToken = async (token) => {
+  try {
+    await AsyncStorage.setItem('@user_token', token);
+  } catch (error) {
+    console.error('Error al guardar el token', error);
+  }
+};
+
+const getToken = async () => {
+  try {
+    const token = await AsyncStorage.getItem('@user_token');
+    return token;
+  } catch (error) {
+    console.error('Error al obtener el token', error);
+    return null;
+  }
+};
+
+const Generar = () => {
+  const [userData, setUserData] = useState({ username: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Cambia la URL de tu API
     const fetchUserData = async () => {
       try {
-        const response = await axios.get("https://tu-api.com/usuario"); // Reemplaza con tu endpoint
-        const { username, email, name } = response.data; // Ajusta si la estructura de la API es diferente
-        setUserData({ username, email, name });
+        // Recuperar el token cuando lo necesites
+        const token = await getToken(); // Obtén el token desde AsyncStorage
+
+        if (!token) {
+          setError("No se encontró el token.");
+          setLoading(false);
+          return;
+        }
+
+        // Realiza la solicitud con el token en los headers
+        const response = await axios.get("http://localhost:5000/api/auth/current", {
+          headers: { Authorization: `Bearer ${token}` } // Envia el token en el header
+        });
+
+        console.log('Datos del usuario:', response.data); // Verifica los datos que recibes
+        const { username } = response.data;
+        console.log(username,token)
+        setUserData({ username });
         setLoading(false);
       } catch (err) {
-        console.error(err);
+        console.error('Error al obtener los datos:', err);
         setError("Error al obtener los datos del usuario");
         setLoading(false);
       }
@@ -44,10 +78,15 @@ const QRScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Nombre: {userData.name}</Text>
-      <Text style={styles.text}>Email: {userData.email}</Text>
       <Text style={styles.text}>Usuario: {userData.username}</Text>
-      {userData.username && <QRCode value={userData.username} size={200} />}
+      {userData.username && (
+        <QRCode
+          value={userData.username}
+          size={200}
+          color="black"
+          backgroundColor="white"
+        />
+      )}
     </View>
   );
 };
@@ -74,4 +113,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default QRScreen;
+export default Generar;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -17,9 +18,17 @@ export const LoginScreen = ({ navigation }) => {
         email,
         password,
       });
-      alert('Login exitoso');
-      setLoading(false);
-      navigation.replace('Drawer'); // Cambia a la pantalla done se tiwene el contenido
+
+      // Aquí guardamos el token que viene en la respuesta
+      const { token } = res.data;
+      if (token) {
+        await AsyncStorage.setItem('@user_token', token);  // Guarda el token en AsyncStorage
+        alert('Login exitoso');
+        setLoading(false);
+        navigation.replace('Drawer'); // Cambia a la pantalla donde se tiene el contenido
+      } else {
+        setErrorMessage('No se recibió un token');
+      }
     } catch (error) {
       console.error(error);
       setLoading(false);
@@ -28,7 +37,7 @@ export const LoginScreen = ({ navigation }) => {
   };
 
   const handleRegister = () => {
-    navigation.navigate('Register'); //va a la pantalla de registro
+    navigation.navigate('Register'); // Va a la pantalla de registro
   };
 
   return (
