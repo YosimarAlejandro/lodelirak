@@ -8,6 +8,7 @@ import axios from "axios";
 const storeToken = async (token) => {
   try {
     await AsyncStorage.setItem('@user_token', token);
+    console.log('Token guardado:', token);  // Verifica que el token se guarda correctamente
   } catch (error) {
     console.error('Error al guardar el token', error);
   }
@@ -16,12 +17,14 @@ const storeToken = async (token) => {
 const getToken = async () => {
   try {
     const token = await AsyncStorage.getItem('@user_token');
+    console.log('Token recuperado:', token);  // Verifica que el token se obtiene correctamente
     return token;
   } catch (error) {
     console.error('Error al obtener el token', error);
     return null;
   }
 };
+
 
 const Generar = () => {
   const [userData, setUserData] = useState({ username: null });
