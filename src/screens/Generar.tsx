@@ -1,43 +1,53 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import QRCode from "react-native-qrcode-svg";
+import axios from "axios";
 
-const QrScreen = ({ username }) => {
-  const [qrCode, setQrCode] = useState(null);
+const QRScreen = () => {
+  const [userData, setUserData] = useState({ username: null, email: null, name: null });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!username) {
-      console.error('Username is undefined');
-      return; // Si el username no está disponible, no hacer la solicitud
-    }
-
-    const fetchQrCode = async () => {
+    // Cambia la URL de tu API
+    const fetchUserData = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/qr/${username}`);
-        console.log(username)
-        setQrCode(response.data.qrCode);
-      } catch (error) {
-        console.error('Error fetching QR Code:', error);
-      } finally {
+        const response = await axios.get("https://tu-api.com/usuario"); // Reemplaza con tu endpoint
+        const { username, email, name } = response.data; // Ajusta si la estructura de la API es diferente
+        setUserData({ username, email, name });
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError("Error al obtener los datos del usuario");
         setLoading(false);
       }
     };
 
-    fetchQrCode();
-  }, [username]);
+    fetchUserData();
+  }, []);
 
   if (loading) {
-    return <ActivityIndicator style={styles.loader} size="large" />;
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
   }
 
-  if (!qrCode) {
-    return <Text>No QR code available.</Text>;
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.error}>{error}</Text>
+      </View>
+    );
   }
 
   return (
     <View style={styles.container}>
-      <img src={qrCode} alt="QR Code" style={styles.qrImage} />
+      <Text style={styles.text}>Nombre: {userData.name}</Text>
+      <Text style={styles.text}>Email: {userData.email}</Text>
+      <Text style={styles.text}>Usuario: {userData.username}</Text>
+      {userData.username && <QRCode value={userData.username} size={200} />}
     </View>
   );
 };
@@ -45,16 +55,23 @@ const QrScreen = ({ username }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
   },
-  qrImage: {
-    width: 200,
-    height: 200,
+  text: {
+    fontSize: 18,
+    marginBottom: 10,
   },
-  loader: {
+  centered: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  error: {
+    color: "red",
+    fontSize: 16,
   },
 });
 
-export default QrScreen;
+export default QRScreen;
